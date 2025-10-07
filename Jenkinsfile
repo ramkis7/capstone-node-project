@@ -17,15 +17,17 @@ pipeline {
             steps {
                 // Inject SONAR_TOKEN from Jenkins credentials
                 withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
-                    script {
-                        def scannerHome = tool 'SonarScanner' // Make sure SonarScanner is installed in Jenkins
-                        sh """
-                        ${scannerHome}/bin/sonar-scanner \
-                            -Dsonar.projectKey=myweb \
-                            -Dsonar.sources=. \
-                            -Dsonar.host.url=http://184.72.190.166:9000 \
-                            -Dsonar.login=${SONAR_TOKEN}
-                        """
+                    withSonarQubeEnv('sonar-local') {
+                        script {
+                            // Use multiline shell string to avoid Groovy secret interpolation issues
+                            sh '''
+                                ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                                    -Dsonar.projectKey=myweb \
+                                    -Dsonar.sources=. \
+                                    -Dsonar.host.url=http://184.72.190.166:9000 \
+                                    -Dsonar.login=$SONAR_TOKEN
+                            '''
+                        }
                     }
                 }
             }
@@ -33,7 +35,8 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 5, unit: 'MINUTES') { // increased timeout to be safe
+                // Wait up to 5 minutes for SonarQube Quality Gate
+                timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -49,10 +52,10 @@ pipeline {
         stage('Deploy Container') {
             steps {
                 sh '''
-                if [ "$(docker ps -aq -f name=myweb)" ]; then
-                    docker rm -f myweb
-                fi
-                docker run -d --name myweb -p 80:3000 myweb:latest
+                    if [ "$(docker ps -aq -f name=myweb)" ]; then
+                        docker rm -f myweb
+                    fi
+                    docker run -d --name myweb -p 80:3000 myweb:latest
                 '''
             }
         }
