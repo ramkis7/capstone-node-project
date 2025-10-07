@@ -17,11 +17,15 @@ pipeline {
             steps {
                 // Inject SONAR_TOKEN from Jenkins credentials
                 withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
-                    withSonarQubeEnv('sonar-local') {
-                        script {
-                            def scannerHome = tool 'SonarScanner' // Make sure SonarScanner is installed in Jenkins
-                            sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=myweb -Dsonar.sources=. -Dsonar.host.url=http://localhost:9000 -Dsonar.login=${SONAR_TOKEN}"
-                        }
+                    script {
+                        def scannerHome = tool 'SonarScanner' // Make sure SonarScanner is installed in Jenkins
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=myweb \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=http://184.72.190.166:9000 \
+                            -Dsonar.login=${SONAR_TOKEN}
+                        """
                     }
                 }
             }
@@ -29,7 +33,7 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 3, unit: 'MINUTES') {
+                timeout(time: 5, unit: 'MINUTES') { // increased timeout to be safe
                     waitForQualityGate abortPipeline: true
                 }
             }
