@@ -15,18 +15,19 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                // Inject SONAR_TOKEN from Jenkins credentials
                 withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                     withSonarQubeEnv('sonar-local') {
                         script {
-                            // Use multiline shell string to avoid Groovy secret interpolation issues
-                            sh '''
-                                ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                            // Use the SonarScanner tool installed automatically by Jenkins
+                            def scannerHome = tool 'SonarScanner'
+                            sh """
+                                set -e
+                                "${scannerHome}/bin/sonar-scanner" \
                                     -Dsonar.projectKey=myweb \
                                     -Dsonar.sources=. \
                                     -Dsonar.host.url=http://184.72.190.166:9000 \
                                     -Dsonar.login=$SONAR_TOKEN
-                            '''
+                            """
                         }
                     }
                 }
@@ -35,7 +36,6 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                // Wait up to 5 minutes for SonarQube Quality Gate
                 timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
@@ -44,19 +44,23 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${DOCKER_IMAGE} ."
-                sh "docker tag ${DOCKER_IMAGE} myweb:latest"
+                sh """
+                    set -e
+                    docker build -t ${DOCKER_IMAGE} .
+                    docker tag ${DOCKER_IMAGE} myweb:latest
+                """
             }
         }
 
         stage('Deploy Container') {
             steps {
-                sh '''
-                    if [ "$(docker ps -aq -f name=myweb)" ]; then
+                sh """
+                    set -e
+                    if [ "\$(docker ps -aq -f name=myweb)" ]; then
                         docker rm -f myweb
                     fi
                     docker run -d --name myweb -p 80:3000 myweb:latest
-                '''
+                """
             }
         }
     }
