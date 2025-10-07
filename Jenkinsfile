@@ -7,21 +7,32 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') { steps { checkout scm } }
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonar-local') {
-                    script {
-                        def scannerHome = tool 'SonarScanner'
-                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=myweb -Dsonar.sources=. -Dsonar.host.url=http://localhost:9000 -Dsonar.login=${SONAR_TOKEN}"
+                // Inject SONAR_TOKEN from Jenkins credentials
+                withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
+                    withSonarQubeEnv('sonar-local') {
+                        script {
+                            def scannerHome = tool 'SonarScanner' // Make sure SonarScanner is installed in Jenkins
+                            sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=myweb -Dsonar.sources=. -Dsonar.host.url=http://localhost:9000 -Dsonar.login=${SONAR_TOKEN}"
+                        }
                     }
                 }
             }
         }
 
         stage('Quality Gate') {
-            steps { timeout(time: 3, unit: 'MINUTES') { waitForQualityGate abortPipeline: true } }
+            steps {
+                timeout(time: 3, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
         }
 
         stage('Build Docker Image') {
@@ -34,7 +45,9 @@ pipeline {
         stage('Deploy Container') {
             steps {
                 sh '''
-                if [ "$(docker ps -aq -f name=myweb)" ]; then docker rm -f myweb; fi
+                if [ "$(docker ps -aq -f name=myweb)" ]; then
+                    docker rm -f myweb
+                fi
                 docker run -d --name myweb -p 80:3000 myweb:latest
                 '''
             }
@@ -42,8 +55,11 @@ pipeline {
     }
 
     post {
-        success { echo "Deployed. Visit EC2 public IP on port 80" }
-        failure { echo "Pipeline failed. Check logs." }
+        success {
+            echo "Deployed successfully! Visit your EC2 public IP on port 80"
+        }
+        failure {
+            echo "Pipeline failed. Check logs."
+        }
     }
 }
-
