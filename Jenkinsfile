@@ -19,11 +19,10 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                nodejs('NodeJS_18') {
+                nodejs('NodeJS_16') { // Corrected Node.js version
                     withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                         withSonarQubeEnv('sonar-local') {
                             script {
-                                
                                 def scannerHome = tool 'SonarScanner'
                                 sh """
                                     set -e
@@ -31,7 +30,7 @@ pipeline {
                                         -Dsonar.projectKey=myweb \\
                                         -Dsonar.sources=. \\
                                         -Dsonar.sourceEncoding=UTF-8 \\
-                                        -Dsonar.login=\$SONAR_TOKEN 
+                                        -Dsonar.login=\$SONAR_TOKEN
                                 """
                             }
                         }
@@ -50,36 +49,54 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh """
+                sh '''
                     set -e
-                    docker build -t ${APP_IMAGE} .
-                    docker tag ${APP_IMAGE} myweb:latest
-                """
+                    # Ensure Minikube is running before building the image
+                    minikube status || minikube start --driver=docker
+
+                    # Point to Minikube's Docker daemon
+                    eval $(minikube docker-env)
+                    
+                    # Build the image inside the Minikube cluster
+                    docker build -t myweb:${BUILD_NUMBER} .
+                    echo "Built image myweb:${BUILD_NUMBER} directly within the Minikube cluster's Docker daemon."
+                '''
             }
         }
 
-        stage('Deploy Container') {
+        stage('Deploy to Minikube') {
             steps {
-                sh """
+                sh '''
                     set -e
-                    if [ "\$(docker ps -aq -f name=myweb)" ]; then
-                        docker rm -f myweb
-                    fi
-                    docker run -d --name myweb -p 80:3000 myweb:latest
-                """
+                    echo "Deploying to Minikube..."
+                    minikube status || minikube start --driver=docker
+                    
+                    # Update the service manifest first if needed
+                    minikube kubectl -- apply -f service.yaml
+
+                    # Set the new image for the deployment, triggering a new rollout
+                    minikube kubectl -- set image deployment/web node-app=myweb:${BUILD_NUMBER}
+
+                    # Wait for the new pod to be ready
+                    echo "Waiting for pods to be ready..."
+                    minikube kubectl -- wait --for=condition=Ready pod -l=app=web --timeout=60s
+
+                    echo "Successfully deployed to Minikube."
+                    echo "Access the application using: minikube service web --url"
+                '''
             }
         }
     }
 
     post {
         success {
-            echo "Deployed successfully! Visit your EC2 public IP on port 80"
+            echo "Pipeline finished successfully! The application is deployed."
         }
         failure {
-            echo "Pipeline failed. Check logs."
+            echo "Pipeline failed. Check logs for errors."
         }
         aborted {
-            echo "Pipeline was aborted, likely by a Quality Gate timeout."
+            echo "Pipeline was aborted due to a Quality Gate failure."
         }
     }
 }
