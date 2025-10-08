@@ -23,7 +23,7 @@ pipeline {
                 // Wrap the analysis steps with the nodejs tool configuration
                 // *** REPLACE 'NodeJS_18' with the name you configure in Jenkins Tools ***
                 nodejs('NodeJS_18') { 
-                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                    withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                         withSonarQubeEnv('sonar-local') {
                             script {
                                 def scannerHome = tool 'SonarScanner'
