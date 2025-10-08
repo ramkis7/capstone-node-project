@@ -15,18 +15,16 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                    withSonarQubeEnv('sonar-local') {
-                        script {
-                            // Use the SonarScanner tool installed automatically by Jenkins
-                            def scannerHome = tool 'SonarScanner'
-                            sh """
-                                set -e
-                                "${scannerHome}/bin/sonar-scanner" \
-                                    -Dsonar.projectKey=myweb \
-                                    -Dsonar.sources=. \
-                                    -Dsonar.host.url=http://54.83.85.9:9000 \
-                                    -Dsonar.login=$SONAR_TOKEN
-                            """
+                   withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
+                        withSonarQubeEnv('sonar-local') {
+                            script {
+                                def scannerHome = tool 'SonarScanner'
+                                sh """
+                                    "${scannerHome}/bin/sonar-scanner" \
+                                        -Dsonar.projectKey=myweb \
+                                        -Dsonar.sources=. \
+                                """
+                            }
                         }
                     }
             }
