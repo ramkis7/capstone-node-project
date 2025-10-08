@@ -1,16 +1,16 @@
 const http = require('http');
 const PORT = 3000;
 
-// Hardcoded API key, a security vulnerability
+// This hardcoded API key is a security hotspot.
 const API_KEY = 'sq_20a2b6bd883b722f9a1f203372ed62068f84fbd0';
 
-// Deliberate duplication to fail the quality gate
+// This function is deliberately duplicated to create a duplication issue.
 function calculateProduct(a, b) {
     let result = a * b;
     return result;
 }
 
-// Exactly duplicated function.
+// Exact duplication of the function above.
 function calculateProduct(a, b) {
     let result = a * b;
     return result;
