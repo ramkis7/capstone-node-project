@@ -19,11 +19,11 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                nodejs('NodeJS_18') {
+                // Correct Node.js version to avoid GLIBC compatibility issues.
+                nodejs('NodeJS_16') {
                     withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                         withSonarQubeEnv('sonar-local') {
                             script {
-                              
                                 def scannerHome = tool 'SonarScanner'
                                 sh """
                                     set -e
@@ -31,7 +31,7 @@ pipeline {
                                         -Dsonar.projectKey=myweb \\
                                         -Dsonar.sources=. \\
                                         -Dsonar.sourceEncoding=UTF-8 \\
-                                        -Dsonar.login=\$SONAR_TOKEN 
+                                        -Dsonar.login=\$SONAR_TOKEN
                                 """
                             }
                         }
@@ -58,28 +58,34 @@ pipeline {
             }
         }
 
-        stage('Deploy Container') {
+        stage('Deploy to Minikube') {
             steps {
-                sh """
+                sh '''
                     set -e
-                    if [ "\$(docker ps -aq -f name=myweb)" ]; then
-                        docker rm -f myweb
-                    fi
-                    docker run -d --name myweb -p 80:3000 myweb:latest
-                """
+                    echo "Deploying to Minikube..."
+                    # Check if Minikube is running and start it if not
+                    minikube status || minikube start --driver=docker
+
+                    # Apply the Kubernetes manifests
+                    kubectl apply -f deployment.yaml
+                    kubectl apply -f service.yaml
+
+                    echo "Successfully deployed to Minikube."
+                    echo "Access the application using: minikube service web --url"
+                '''
             }
         }
     }
 
     post {
         success {
-            echo "Deployed successfully! Visit your EC2 public IP on port 80"
+            echo "Pipeline finished successfully! The application is deployed."
         }
         failure {
-            echo "Pipeline failed. Check logs."
+            echo "Pipeline failed. Check logs for errors."
         }
         aborted {
-            echo "Pipeline was aborted, likely by a Quality Gate timeout."
+            echo "Pipeline was aborted due to a Quality Gate failure."
         }
     }
 }
