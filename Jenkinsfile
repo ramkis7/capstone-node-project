@@ -61,7 +61,7 @@ pipeline {
                 '''
             }
         }
-
+        
         stage('Deploy to Minikube') {
             steps {
                 sh '''
@@ -69,15 +69,17 @@ pipeline {
                     echo "Deploying to Minikube..."
                     # Check if Minikube is running and start it if not
                     minikube status || minikube start --driver=docker
-                    
-                    # Use minikube's built-in kubectl wrapper to apply the manifests
-                    minikube kubectl -- apply -f deployment.yaml
+        
+                    # Apply the service manifest first. The deployment manifest is not applied here.
                     minikube kubectl -- apply -f service.yaml
-
-                    # Wait for the pod to be ready before moving on
+        
+                    # Set the new image for the deployment, which triggers a new rollout
+                    minikube kubectl -- set image deployment/web node-app=myweb:${BUILD_NUMBER}
+        
+                    # Wait for the new pod to be ready before moving on
                     echo "Waiting for pods to be ready..."
                     minikube kubectl -- wait --for=condition=Ready pod -l=app=web --timeout=60s
-
+        
                     echo "Successfully deployed to Minikube."
                     echo "Access the application using: minikube service web --url"
                 '''
