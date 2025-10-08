@@ -15,7 +15,6 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                     withSonarQubeEnv('sonar-local') {
                         script {
                             // Use the SonarScanner tool installed automatically by Jenkins
@@ -25,12 +24,11 @@ pipeline {
                                 "${scannerHome}/bin/sonar-scanner" \
                                     -Dsonar.projectKey=myweb \
                                     -Dsonar.sources=. \
-                                    -Dsonar.host.url=http://184.72.190.166:9000 \
+                                    -Dsonar.host.url=http://54.83.85.9:9000 \
                                     -Dsonar.login=$SONAR_TOKEN
                             """
                         }
                     }
-                }
             }
         }
 
