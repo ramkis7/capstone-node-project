@@ -1,10 +1,6 @@
 const http = require('http');
 const PORT = 3000;
 
-// Replaced hardcoded key with an environment variable.
-const API_KEY = process.env.API_KEY;
-
-// Removed the duplicate function and refactored the HTML to eliminate duplication.
 const demoCard = `
 <section class="card">
     <h2>Ramki Captone Project </h2>
