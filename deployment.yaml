@@ -1,18 +1,20 @@
+# This is the Deployment configuration for the Node.js web app
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web
+  name: web   # Name of the deployment
 spec:
-  replicas: 1
+  replicas: 1  # Number of pod replicas
   selector:
     matchLabels:
-      app: web
+      app: web  # Selector must match template labels
   template:
     metadata:
       labels:
-        app: web
+        app: web  # Labels for the pod
     spec:
       containers:
-      - name: node-app
-        image: myweb:latest
-        - containerPort: 3000
+        - name: node-app          # Name of the container
+          image: myweb:latest     # Docker image to use
+          ports:
+            - containerPort: 3000 # Port exposed by the container
