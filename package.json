@@ -1,7 +1,7 @@
 {
   "name": "node-project",
   "version": "1.0.0",
-  "description": "Capstone Node.js App",
+  "description": "Capstone Devops Node.js App",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
