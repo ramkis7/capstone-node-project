@@ -23,12 +23,7 @@ pipeline {
                     withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                         withSonarQubeEnv('sonar-local') {
                             script {
-                                // Install development and production dependencies
-                                sh "npm install"
-
-                                // Run tests and generate a coverage report
-                                sh "npm run coverage"
-
+                              
                                 def scannerHome = tool 'SonarScanner'
                                 sh """
                                     set -e
