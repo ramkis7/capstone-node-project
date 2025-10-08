@@ -44,11 +44,13 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                // Following your class notes for a shorter timeout (3 MIN) is safer, 
-                // but 10 MIN is what your log showed, so I'll keep your log's 10 MIN.
-                timeout(time: 10, unit: 'SECONDS') { 
-                    waitForQualityGate abortPipeline: true
-                }
+                // Wait for a short, fixed amount of time to allow SonarQube to process the report.
+                // The previous logs showed SonarQube analysis takes ~2 seconds. A 15-second sleep should be sufficient.
+                echo "Waiting for SonarQube analysis to complete..."
+                sleep 15 // Wait for 15 seconds
+        
+                // Now, check for the quality gate status. This should now find a completed task.
+                waitForQualityGate abortPipeline: true
             }
         }
 
