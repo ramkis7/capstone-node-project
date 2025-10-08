@@ -56,8 +56,8 @@ pipeline {
                     eval $(minikube docker-env)
                     
                     # Now build the image, it will be automatically available to the Minikube cluster
-                    docker build -t myweb:latest .
-                    echo "Built image myweb:latest directly within the Minikube cluster's Docker daemon."
+                    docker build -t myweb:${BUILD_NUMBER} .
+                    echo "Built image myweb:${BUILD_NUMBER} directly within the Minikube cluster's Docker daemon."
                 '''
             }
         }
