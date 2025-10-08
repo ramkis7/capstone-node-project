@@ -20,7 +20,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 // Correct Node.js version to avoid GLIBC compatibility issues.
-                nodejs('NodeJS_16') {
+                nodejs('NodeJS_18') {
                     withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                         withSonarQubeEnv('sonar-local') {
                             script {
