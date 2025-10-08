@@ -1,9 +1,14 @@
 pipeline {
     agent any
     triggers { githubPush() }
+    options {
+        timestamps();
+        disableConcurrentBuilds()
+    }
 
     environment {
-        DOCKER_IMAGE = "myweb:${BUILD_NUMBER}"
+        // Renaming DOCKER_IMAGE to APP_IMAGE for clarity, but your original is fine too
+        APP_IMAGE = "myweb:${BUILD_NUMBER}"
     }
 
     stages {
@@ -15,17 +20,22 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
-                    withSonarQubeEnv('sonar-local') {
-                        script {
-                            def scannerHome = tool 'SonarScanner'
-                            sh """
-                                "${scannerHome}/bin/sonar-scanner" \
-                                    -Dsonar.projectKey=myweb \
-                                    -Dsonar.sources=. \
-                                    -Dsonar.sourceEncoding=UTF-8 \
-                                    -Dsonar.login=\$SONAR_TOKEN
-                            """
+                // Wrap the analysis steps with the nodejs tool configuration
+                // *** REPLACE 'NodeJS_18' with the name you configure in Jenkins Tools ***
+                nodejs('NodeJS_18') { 
+                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                        withSonarQubeEnv('sonar-local') {
+                            script {
+                                def scannerHome = tool 'SonarScanner'
+                                sh """
+                                    set -e
+                                    "${scannerHome}/bin/sonar-scanner" \
+                                        -Dsonar.projectKey=myweb \
+                                        -Dsonar.sources=. \
+                                        -Dsonar.sourceEncoding=UTF-8 \
+                                        -Dsonar.login=\$SONAR_TOKEN
+                                """
+                            }
                         }
                     }
                 }
@@ -34,7 +44,9 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 10, unit: 'MINUTES') {
+                // Following your class notes for a shorter timeout (3 MIN) is safer, 
+                // but 10 MIN is what your log showed, so I'll keep your log's 10 MIN.
+                timeout(time: 10, unit: 'MINUTES') { 
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -44,8 +56,8 @@ pipeline {
             steps {
                 sh """
                     set -e
-                    docker build -t ${DOCKER_IMAGE} .
-                    docker tag ${DOCKER_IMAGE} myweb:latest
+                    docker build -t ${APP_IMAGE} .
+                    docker tag ${APP_IMAGE} myweb:latest
                 """
             }
         }
@@ -57,7 +69,9 @@ pipeline {
                     if [ "\$(docker ps -aq -f name=myweb)" ]; then
                         docker rm -f myweb
                     fi
-                    docker run -d --name myweb -p 80:3000 myweb:latest
+                    # Assuming your Node.js app listens on port 3000 inside the container, 
+                    # and you map host port 80 to it.
+                    docker run -d --name myweb -p 80:3000 myweb:latest 
                 """
             }
         }
@@ -69,6 +83,10 @@ pipeline {
         }
         failure {
             echo "Pipeline failed. Check logs."
+        }
+        // Added the ABORTED status handler to match the pipeline's end state
+        aborted {
+            echo "Pipeline was aborted, likely by a Quality Gate timeout."
         }
     }
 }
