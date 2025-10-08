@@ -31,8 +31,7 @@ pipeline {
                                         -Dsonar.projectKey=myweb \\
                                         -Dsonar.sources=. \\
                                         -Dsonar.sourceEncoding=UTF-8 \\
-                                        -Dsonar.login=\$SONAR_TOKEN \\
-                                        -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                                        -Dsonar.login=\$SONAR_TOKEN 
                                 """
                             }
                         }
