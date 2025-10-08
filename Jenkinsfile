@@ -15,16 +15,14 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                   withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
-                        withSonarQubeEnv('sonar-local') {
-                            script {
-                                def scannerHome = tool 'SonarScanner'
-                                sh """
-                                    "${scannerHome}/bin/sonar-scanner" \
-                                        -Dsonar.projectKey=myweb \
-                                        -Dsonar.sources=. \
-                                """
-                            }
+                    withSonarQubeEnv('sonar-local') {
+                        script {
+                            def scannerHome = tool 'SonarScanner'
+                            sh """
+                                "${scannerHome}/bin/sonar-scanner" \
+                                    -Dsonar.projectKey=myweb \
+                                    -Dsonar.sources=. \
+                            """
                         }
                     }
             }
