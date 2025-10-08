@@ -3,6 +3,7 @@ const PORT = 3000;
 
 // Hardcoded API key for demonstration purposes
 const API_KEY = 'sq_20a2b6bd883b722f9a1f203372ed62068f84fbd0';
+//update check for errors////
 
 const server = http.createServer((req, res) => {
     res.writeHead(200, {'Content-Type':'text/html'});
