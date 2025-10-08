@@ -52,10 +52,13 @@ pipeline {
             steps {
                 sh '''
                     set -e
-                    # Point to Minikube's Docker daemon to ensure the image is built inside the cluster
+                    # Ensure Minikube is running and configured before getting its Docker environment
+                    minikube status || minikube start --driver=docker
+        
+                    # Point to Minikube's Docker daemon
                     eval $(minikube docker-env)
                     
-                    # Now build the image, it will be automatically available to the Minikube cluster
+                    # Now build the image, which will be available to the Minikube cluster
                     docker build -t myweb:${BUILD_NUMBER} .
                     echo "Built image myweb:${BUILD_NUMBER} directly within the Minikube cluster's Docker daemon."
                 '''
