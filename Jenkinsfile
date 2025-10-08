@@ -20,7 +20,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 // Correct Node.js version to avoid GLIBC compatibility issues.
-                nodejs('NodeJS_18') {
+                nodejs('NodeJS_16') {
                     withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                         withSonarQubeEnv('sonar-local') {
                             script {
@@ -50,11 +50,15 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh """
+                sh '''
                     set -e
-                    docker build -t ${APP_IMAGE} .
-                    docker tag ${APP_IMAGE} myweb:latest
-                """
+                    # Point to Minikube's Docker daemon to ensure the image is built inside the cluster
+                    eval $(minikube docker-env)
+                    
+                    # Now build the image, it will be automatically available to the Minikube cluster
+                    docker build -t myweb:latest .
+                    echo "Built image myweb:latest directly within the Minikube cluster's Docker daemon."
+                '''
             }
         }
 
@@ -65,15 +69,15 @@ pipeline {
                     echo "Deploying to Minikube..."
                     # Check if Minikube is running and start it if not
                     minikube status || minikube start --driver=docker
-        
-                    # Apply the Kubernetes manifests FIRST to create the resources
+                    
+                    # Use minikube's built-in kubectl wrapper to apply the manifests
                     minikube kubectl -- apply -f deployment.yaml
                     minikube kubectl -- apply -f service.yaml
-        
-                    # THEN, wait for the pod to be ready
+
+                    # Wait for the pod to be ready before moving on
                     echo "Waiting for pods to be ready..."
                     minikube kubectl -- wait --for=condition=Ready pod -l=app=web --timeout=60s
-        
+
                     echo "Successfully deployed to Minikube."
                     echo "Access the application using: minikube service web --url"
                 '''
