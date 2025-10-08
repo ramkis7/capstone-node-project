@@ -7,8 +7,8 @@ const API_KEY = process.env.API_KEY;
 // Removed the duplicate function and refactored the HTML to eliminate duplication.
 const demoCard = `
 <section class="card">
-    <h2>Demo Card</h2>
-    <p>Line 1</p><p>Line 2</p><p>Line 3</p>
+    <h2>Ramki Captone Project </h2>
+    <p>Jenkins Pipeline</p><p>Quality Gate</p><p>Success Card</p>
 </section>`;
 
 const server = http.createServer((req, res) => {
