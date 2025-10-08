@@ -4,8 +4,13 @@
   "description": "Capstone Node.js App",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "mocha test/test.js",
+    "coverage": "nyc --reporter=lcov --reporter=text npm test"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "devDependencies": {
+    "mocha": "^10.0.0",
+    "nyc": "^15.1.0"
+  }
 }
-
