@@ -4,7 +4,7 @@ const PORT = 3000;
 const demoCard = `
 <section class="card">
     <h2>Ramki Captone Project </h2>
-    <p>Jenkins Pipeline</p><p>Quality Gate</p><p>Success Card</p>
+    <p>Jenkins Pipeline</p><p>Quality Gate</p><p>Success</p>
 </section>`;
 
 const server = http.createServer((req, res) => {
