@@ -14,5 +14,6 @@ spec:
     spec:
       containers:
       - name: node-app
-        image: myweb:latest
+        image: myweb:placeholder # This should be a placeholder
+        ports:
         - containerPort: 3000
