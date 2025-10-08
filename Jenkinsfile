@@ -65,11 +65,15 @@ pipeline {
                     echo "Deploying to Minikube..."
                     # Check if Minikube is running and start it if not
                     minikube status || minikube start --driver=docker
-
-                    # Apply the Kubernetes manifests
-                    kubectl apply -f deployment.yaml
-                    kubectl apply -f service.yaml
-
+        
+                    # Wait for the Minikube cluster to be fully ready
+                    # Note: This is an optional but good practice to ensure kubectl commands work
+                    minikube kubectl -- wait --for=condition=Ready pod -l=app=web --timeout=60s
+        
+                    # Use minikube's built-in kubectl wrapper to apply the manifests
+                    minikube kubectl -- apply -f deployment.yaml
+                    minikube kubectl -- apply -f service.yaml
+        
                     echo "Successfully deployed to Minikube."
                     echo "Access the application using: minikube service web --url"
                 '''
