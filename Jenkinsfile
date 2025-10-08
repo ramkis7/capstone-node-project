@@ -7,7 +7,6 @@ pipeline {
     }
 
     environment {
-        // Renaming DOCKER_IMAGE to APP_IMAGE for clarity, but your original is fine too
         APP_IMAGE = "myweb:${BUILD_NUMBER}"
     }
 
@@ -20,20 +19,25 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                // Wrap the analysis steps with the nodejs tool configuration
-                // *** REPLACE 'NodeJS_18' with the name you configure in Jenkins Tools ***
-                nodejs('NodeJS_18') { 
+                nodejs('NodeJS_18') {
                     withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                         withSonarQubeEnv('sonar-local') {
                             script {
+                                // Install development and production dependencies
+                                sh "npm install"
+
+                                // Run tests and generate a coverage report
+                                sh "npm run coverage"
+
                                 def scannerHome = tool 'SonarScanner'
                                 sh """
                                     set -e
-                                    "${scannerHome}/bin/sonar-scanner" \
-                                        -Dsonar.projectKey=myweb \
-                                        -Dsonar.sources=. \
-                                        -Dsonar.sourceEncoding=UTF-8 \
-                                        -Dsonar.login=\$SONAR_TOKEN
+                                    "${scannerHome}/bin/sonar-scanner" \\
+                                        -Dsonar.projectKey=myweb \\
+                                        -Dsonar.sources=. \\
+                                        -Dsonar.sourceEncoding=UTF-8 \\
+                                        -Dsonar.login=\$SONAR_TOKEN \\
+                                        -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
                                 """
                             }
                         }
@@ -44,12 +48,8 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                // Wait for a short, fixed amount of time to allow SonarQube to process the report.
-                // The previous logs showed SonarQube analysis takes ~2 seconds. A 15-second sleep should be sufficient.
                 echo "Waiting for SonarQube analysis to complete..."
-                sleep 15 // Wait for 15 seconds
-        
-                // Now, check for the quality gate status. This should now find a completed task.
+                sleep 15
                 waitForQualityGate abortPipeline: true
             }
         }
@@ -71,9 +71,7 @@ pipeline {
                     if [ "\$(docker ps -aq -f name=myweb)" ]; then
                         docker rm -f myweb
                     fi
-                    # Assuming your Node.js app listens on port 3000 inside the container, 
-                    # and you map host port 80 to it.
-                    docker run -d --name myweb -p 80:3000 myweb:latest 
+                    docker run -d --name myweb -p 80:3000 myweb:latest
                 """
             }
         }
@@ -86,7 +84,6 @@ pipeline {
         failure {
             echo "Pipeline failed. Check logs."
         }
-        // Added the ABORTED status handler to match the pipeline's end state
         aborted {
             echo "Pipeline was aborted, likely by a Quality Gate timeout."
         }
