@@ -15,6 +15,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
+                withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                     withSonarQubeEnv('sonar-local') {
                         script {
                             def scannerHome = tool 'SonarScanner'
@@ -22,15 +23,19 @@ pipeline {
                                 "${scannerHome}/bin/sonar-scanner" \
                                     -Dsonar.projectKey=myweb \
                                     -Dsonar.sources=. \
+                                    -Dsonar.sourceEncoding=UTF-8 \
+                                    -Dsonar.login=\$SONAR_TOKEN
                             """
                         }
                     }
+                }
             }
         }
 
+
         stage('Quality Gate') {
             steps {
-                timeout(time: 5, unit: 'MINUTES') {
+                timeout(time: 10, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
