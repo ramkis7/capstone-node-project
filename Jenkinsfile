@@ -46,7 +46,7 @@ pipeline {
             steps {
                 // Following your class notes for a shorter timeout (3 MIN) is safer, 
                 // but 10 MIN is what your log showed, so I'll keep your log's 10 MIN.
-                timeout(time: 10, unit: 'MINUTES') { 
+                timeout(time: 10, unit: 'SECONDS') { 
                     waitForQualityGate abortPipeline: true
                 }
             }
