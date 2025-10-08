@@ -24,28 +24,13 @@ pipeline {
                                     -Dsonar.projectKey=myweb \
                                     -Dsonar.sources=. \
                                     -Dsonar.sourceEncoding=UTF-8 \
-                                    -Dsonar.login=\$SONAR_TOKENstage('SonarQube Analysis') {
-    steps {
-            withSonarQubeEnv('sonar-local') {
-                script {
-                    def scannerHome = tool 'SonarScanner'
-                    sh """
-                        "${scannerHome}/bin/sonar-scanner" \
-                            -Dsonar.projectKey=myweb \
-                            -Dsonar.sources=. \
-                            -Dsonar.sourceEncoding=UTF-8 \
-                    """
-                }
-            }
-    }
-}
+                                    -Dsonar.login=\$SONAR_TOKEN
                             """
                         }
                     }
                 }
             }
         }
-
 
         stage('Quality Gate') {
             steps {
